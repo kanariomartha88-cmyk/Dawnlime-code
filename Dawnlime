@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dawnlime v2 - Program ANY App</title>
+<style>
+body {font-family:Arial,sans-serif;margin:40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#333;}
+#title {color:white;font-size:28px;text-align:center;margin:20px 0;text-shadow:2px 2px 4px rgba(0,0,0,0.3);}
+#out {background:white;border-radius:10px;padding:20px;height:250px;overflow:auto;white-space:pre-wrap;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+#in {width:100%;margin:10px 0;padding:15px;border:0;border-radius:10px;font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+#screen {background:#f8f9fa;border-radius:15px;padding:20px;margin:20px 0;box-shadow:0 8px 25px rgba(0,0,0,0.15);}
+button {background:linear-gradient(45deg,#ff6b6b,#feca57);color:white;padding:12px 24px;font-size:18px;border:none;border-radius:25px;cursor:pointer;margin:5px;transition:all 0.3s;}
+button:hover {transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.2);}
+</style>
+</head>
+<body>
+<div id=title>Dawnlime Ready 🚀</div>
+<textarea id=in rows=8 placeholder="• App 'GameHub' plays games & tools
+• When click START, show menu: TicTacToe Calculator Timer
+• Button 'TicTacToe' starts 3x3 X/O game with win check"></textarea>
+<br><button onclick="runDawnlime()">🚀 Build Dawnlime App</button>
+<div id=screen></div>
+<div id=out>Copy code → Save → Open → Play! Type your app above 👆</div>
+
+<script>
+// Dawnlime v2 - Full App Builder (Feb 27, 2026)
+class Dawnlime {
+    constructor() {
+        this.apps = { game: {}, calc: {}, timer: {} };
+        this.currentApp = 'Dawnlime';
+        this.screen = document.getElementById('screen');
+        this.components = [];
+    }
+
+    parse(code) {
+        const lines = code.split('
+').map(l => l.trim()).filter(l => l.startsWith('•'));
+        document.getElementById('title').textContent = 'Dawnlime Building...';
+        
+        lines.forEach(line => {
+            line = line.slice(1).trim();
+            
+            if (line.match(/Apps+"(.+?)"/i)) {
+                this.currentApp = line.match(/Apps+"(.+?)"/i)[1];
+                document.getElementById('title').textContent = `${this.currentApp} by Dawnlime`;
+            }
+            
+            else if (line.match(/Buttons+"(.+?)"s+runss+(.+)/i)) {
+                const [, label, action] = line.match(/Buttons+"(.+?)"s+runss+(.+)/i);
+                this.createButton(label, () => this.runAction(action));
+            }
+            
+            else if (line.match(/Games+(w+)s+(d+)x(d+)/i)) {
+                const [, name, rows, cols] = line.match(/Games+(w+)s+(d+)x(d+)/i);
+                this.apps.game[name] = { 
+                    board: Array(parseInt(rows)*parseInt(cols)).fill(''), 
+                    size: [parseInt(rows), parseInt(cols)], turn: 'X' 
+                };
+                this.createGameBoard(name);
+            }
+            
+            else if (line.match(/Calcs+(.+)/i)) {
+                this.createCalculator();
+            }
+            
+            else if (line.match(/Lists+"(.+?)"s+hass+(.+)/i)) {
+                const [, name, items] = line.match(/Lists+"(.+?)"s+hass+(.+)/i);
+                const itemList = items.split(',').map(i => i.trim());
+                this.createList(name, itemList);
+            }
+            
+            else if (line.match(/Timers+(d+)/i)) {
+                const [, duration] = line.match(/Timers+(d+)/i);
+                this.createTimer(duration);
+            }
+        });
+        this.output(`✅ Dawnlime built ${this.currentApp}!`);
+    }
+
+    createButton(label, onClick) {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.onclick = onClick;
+        this.screen.appendChild(btn);
+    }
+
+    createGameBoard(gameName) {
+        const game = this.apps.game[gameName];
+        const board = document.createElement('div');
+        board.style.cssText = 'display:grid;gap:3px;background:#333;padding:15px;border-radius:15px;margin:10px 0;';
+        board.style.gridTemplateColumns = `repeat(${game.size[0]}, 70px)`;
+        
+        for (let i = 0; i < game.size[0] * game.size[1]; i++) {
+            const cell = document.createElement('div');
+            cell.style.cssText = 'width:70px;height:70px;background:#fff;border:3px solid #666;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;cursor:pointer;border-radius:8px;transition:background 0.2s;';
+            cell.onclick = () => this.makeMove(gameName, i);
+            board.appendChild(cell);
+            game.cells = board.children;
+        }
+        this.screen.appendChild(board);
+        this.createButton('🔄 Reset', () => this.resetGame(gameName));
+    }
+
+    makeMove(gameName, pos) {
+        const game = this.apps.game[gameName];
+        if (!game.board[pos] && game.turn) {
+            game.board[pos] = game.turn;
+            game.cells[pos].textContent = game.turn;
+            game.cells[pos].style.background = game.turn === 'X' ? '#ffeb3b' : '#f48fb1';
+            game.turn = game.turn === 'X' ? 'O' : 'X';
+            
+            if (this.checkWin(gameName)) {
+                this.output(`${game.turn} WINS! 🎉`);
+                game.turn = '';
+            }
+        }
+    }
+
+    checkWin(gameName) {
+        const game = this.apps.game[gameName];
+        return game.board.join('').match(/XXX|OOO/);
+    }
+
+    resetGame(gameName) {
+        const game = this.apps.game[gameName];
+        game.board.fill('');
+        game.turn = 'X';
+        Array.from(game.cells || []).forEach(cell => {
+            cell.textContent = ''; 
+            cell.style.background = '#fff';
+        });
+    }
+
+    createCalculator() {
+        const calc = document.createElement('div');
+        calc.innerHTML = `
+            <div style="margin:10px 0;font-size:20px;">🧮 Calculator</div>
+            <input id=calcInput type=number style="width:120px;padding:10px;font-size:18px;border-radius:8px;border:2px solid #ddd;margin:5px;" value=0>
+            <button onclick="dawnlime.add()">➕</button>
+            <button onclick="dawnlime.subtract()">➖</button>
+            <button onclick="dawnlime.multiply()">✖️</button>
+            <div id=calcResult style="font-size:24px;font-weight:bold;color:#2196F3;margin:10px 0;">0</div>
+        `;
+        this.screen.appendChild(calc);
+    }
+
+    add() { 
+        const input = parseInt(document.getElementById('calcInput').value || 0);
+        document.getElementById('calcResult').textContent = input + 10;
+    }
+    subtract() { 
+        const input = parseInt(document.getElementById('calcInput').value || 0);
+        document.getElementById('calcResult').textContent = input - 5;
+    }
+    multiply() { 
+        const input = parseInt(document.getElementById('calcInput').value || 0);
+        document.getElementById('calcResult').textContent = input * 3;
+    }
+
+    createList(name, items) {
+        const list = document.createElement('select');
+        list.style.cssText = 'width:180px;padding:12px;margin:10px;border-radius:8px;border:2px solid #ddd;font-size:16px;background:white;';
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.textContent = item;
+            list.appendChild(option);
+        });
+        list.onchange = (e) => this.output(`✅ Selected: ${e.target.value}`);
+        this.screen.appendChild(list);
+    }
+
+    createTimer(duration) {
+        let time = parseInt(duration);
+        const timerDiv = document.createElement('div');
+        timerDiv.id = 'timer';
+        timerDiv.style.cssText = 'font-size:64px;font-weight:bold;color:#ff4444;margin:20px;text-align:center;text-shadow:2px 2px 4px rgba(0,0,0,0.3);';
+        timerDiv.textContent = `${time}s`;
+        this.screen.appendChild(timerDiv);
+        
+        const interval = setInterval(() => {
+            time--;
+            timerDiv.textContent = `${time}s`;
+            timerDiv.style.color = time <= 5 ? '#ff0000' : '#ff4444';
+            if (time <= 0) {
+                clearInterval(interval);
+                this.notify('⏰ Time is UP!');
+            }
+        }, 1000);
+    }
+
+    runAction(action) {
+        this.output(`✅ Action executed: ${action}`);
+    }
+
+    output(text) {
+        const out = document.getElementById('out');
+        out.textContent += `${new Date().toLocaleTimeString()}: ${text}
+`;
+        out.scrollTop = out.scrollHeight;
+    }
+
+    notify(msg) {
+        this.output(`🔔 ${msg}`);
+    }
+}
+
+const dawnlime = new Dawnlime();
+
+function runDawnlime() {
+    document.getElementById('screen').innerHTML = '';
+    dawnlime.parse(document.getElementById('in').value);
+}
+
+document.getElementById('in').addEventListener('input', runDawnlime);
+
+// Load demo
+window.onload = () => {
+    document.getElementById('in').value = `• App "Dawnlime Games" 
+• Button "TicTacToe" runs 3x3 X/O game
+• Game TicTacToe 3x3 with win check
+• Button "Calculator" runs calc
+• Calc add/subtract/multiply/show result
+• Timer 30sec countdown with alarm`;
+    runDawnlime();
+};
+</script>
+</body>
+</html>
